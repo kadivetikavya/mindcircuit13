@@ -1,0 +1,79 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'maven 3'
+        // 'git' tool config is optional and can be removed unless you've defined it explicitly in Jenkins.
+    }
+
+    environment {
+        GIT_REPO_NAME = "mindcircuit13"
+        GIT_USER_NAME = "kadivetikavya"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo 'Cloning GitHub Repo'
+                git branch: 'main', url: "https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git"
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                echo 'Running SonarQube scan'
+                sh 'ls -lrth'
+                sh '''
+                    mvn sonar:sonar \\
+                    -Dsonar.host.url=http://54.89.165.236:9000/ \\
+                    -Dsonar.login=squ_800a3889101789f29e0781385c095a1978c547d4
+                '''
+            }
+        }
+
+        stage('Build Artifact') {
+            steps {
+                echo 'Building Maven Artifact'
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker Image'
+                sh 'docker build -t kadivetikavya/kadi-repo:${BUILD_NUMBER} .'
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                echo 'Logging in and pushing Docker image'
+                withCredentials([string(credentialsId: 'dockerhub', variable: 'dockerhub')]) {
+                    sh """
+                        echo "${dockerhub}" | docker login -u kadivetikavya --password-stdin
+                        docker push kadivetikavya/kadi-repo:${BUILD_NUMBER}
+                    """
+                }
+            }
+        }
+
+        stage('Update Deployment File') {
+            steps {
+                echo 'Updating Deployment YAML File'
+                withCredentials([string(credentialsId: 'githubtocken', variable: 'githubtocken')]) {
+                    sh """
+                        git config user.email "kadivetikavya@gmail.com"
+                        git config user.name "kadivetikavya"
+
+                        sed -i "s/kadi-repo:.*/kadi-repo:${BUILD_NUMBER}/g" deploymentfiles/deployment.yml
+                        git add deploymentfiles/deployment.yml
+                        git commit -m "Update deployment image to version ${BUILD_NUMBER}" || echo "No changes to commit"
+                        git push https://${githubtocken}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:main
+                    """
+                }
+            }
+        }
+
+    }
+}
