@@ -15,16 +15,16 @@
 	</properties>
 
 	<distributionManagement>
-		 <snapshotRepository>
-		    <id>NexusRepo</id>
-		    <url>http://98.80.122.184:8081/repository/maven-snapshots/</url>
-		 </snapshotRepository>
-		
-		<repository>
-		    <id>NexusRepo</id>
-		    <url>http://98.80.122.184:8081/repository/maven-releases/</url>
-		</repository>
-  	</distributionManagement>
+  <repository>
+    <id>nexus</id> <!-- must match Jenkins credentialsId -->
+    <url>http://98.80.122.184:8081/repository/maven-releases/</url>
+  </repository>
+  <snapshotRepository>
+    <id>nexus</id>
+    <url>http://98.80.122.184:8081/repository/maven-snapshots/</url>
+  </snapshotRepository>
+</distributionManagement>
+
 
     
     <build>
