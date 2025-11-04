@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.example</groupId>
-    <artifactId>mindcircuitbatch13</artifactId>
-    <version>2.7</version>
+    <artifactId>kk</artifactId>
+    <version>2.7-snap</version>
     <packaging>war</packaging>
 
 	<properties>
